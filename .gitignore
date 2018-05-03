@@ -1,0 +1,13 @@
+# compiled
+*.pyc
+
+# cache
+__pycache__/*
+
+# python virtual enviroment
+script_env/*
+
+# dataset
+cohn-kanade-images/*
+Emotion/*
+FACS/*
