@@ -3,35 +3,97 @@ import numpy as np
 from PIL import Image
 from pathlib import Path
 from scipy import sparse
-
+import cv2
 
 class CKP:
-    """docstring for CKP."""
+    @staticmethod
+    def get_imgs_and_labels(threshold_func=None, labels_dir='FACS/', imgs_dir='cohn-kanade-images/', reshape=None):
+        imgs = []
+        labels = []
+        for filename in glob.iglob(labels_dir + '**/*.txt', recursive=True):
+            img_path = Path(
+                imgs_dir + filename[len(labels_dir):-len('_facs.txt')] + '.png')
 
-    def __init__(self, labels_dir='FACS/', imgs_dir='cohn-kanade-images/'):
-        self.labels_dir = labels_dir
-        self.imgs_dir = imgs_dir
-        self.imgs = []
-        self.labels = {}
+            if img_path.is_file():
+                img = np.array(Image.open(img_path))
+                if reshape != None:
+                    img = cv2.resize(img, reshape)
 
-    def read_data(self, all_imgs=False, threshold_func=None):
-        for filename in glob.iglob(self.imgs_dir + '**/*.png', recursive=True):
-            label_path = Path(
-                self.labels_dir + filename[len(self.imgs_dir):-len('.png')] + '_facs.txt')
-
-            if label_path.is_file() or all_imgs:
-                img = np.array(Image.open(filename))
                 if threshold_func == None:
-                    self.imgs.append(img.ravel())
+                    imgs.append(img)
                 else:
-                    self.imgs.append(np.multiply(
-                        (img > threshold_func(img)), 1).ravel())
+                    imgs.append((img <= threshold_func(img)).astype(np.uint8))
 
-            if label_path.is_file() and not all_imgs:
+                labels_file = open(str(filename), "r").read()
+                temp_labels = [i for i in labels_file.replace(
+                    '\n', ' ').split(' ') if i != '' and i != '\n']
+                img_labels = []
+                for i in range(0, len(temp_labels), 2):
+                    img_labels.append([temp_labels[i], temp_labels[i + 1]])
+                labels.append(img_labels)
+
+        return [imgs, labels]
+
+    @staticmethod
+    def get_imgs_labels_and_emotions(threshold_func=None, labels_dir='FACS/', emotions_dir='Emotion/', imgs_dir='cohn-kanade-images/', reshape=None):
+        imgs = []
+        labels = []
+        emotions = []
+        for filename in glob.iglob(emotions_dir + '**/*.txt', recursive=True):
+            img_path = Path(
+                imgs_dir + filename[len(emotions_dir):-len('_emotion.txt')] + '.png')
+
+            if img_path.is_file():
+                img = np.array(Image.open(img_path))
+                if reshape != None:
+                    img = cv2.resize(img, reshape)
+
+                if threshold_func == None:
+                    imgs.append(img)
+                else:
+                    imgs.append((img <= threshold_func(img)).astype(np.uint8))
+
+                labels_file = open(labels_dir+str(filename[len(emotions_dir):-len('_emotion.txt')] + '_facs.txt'), "r").read()
+                temp_labels = [i for i in labels_file.replace(
+                    '\n', ' ').split(' ') if i != '' and i != '\n']
+                img_labels = []
+                for i in range(0, len(temp_labels), 2):
+                    img_labels.append([temp_labels[i], temp_labels[i + 1]])
+                labels.append(img_labels)
+
+                emotion_file = open(str(filename), "r").read()
+                temp_emotion = [i for i in emotion_file.replace(
+                    '\n', ' ').split(' ') if i != '' and i != '\n']
+
+                emotions.append(temp_emotion)
+
+        return [imgs, labels, emotions]
+
+    @staticmethod
+    def get_all_imgs(threshold_func=None, labels_dir='FACS/', imgs_dir='cohn-kanade-images/', reshape=None):
+        imgs = []
+        labels = {}
+        for filename in glob.iglob(imgs_dir + '**/*.png', recursive=True):
+            print(filename)
+            label_path = Path(
+                labels_dir + filename[len(imgs_dir):-len('.png')] + '_facs.txt')
+
+            img = np.array(Image.open(filename))
+            if reshape != None:
+                img = cv2.resize(img, reshape)
+
+            if threshold_func == None:
+                imgs.append(img)
+            else:
+                imgs.append((img <= threshold_func(img)).astype(np.uint8))
+
+            if label_path.is_file():
                 labels_file = open(str(label_path), "r").read()
                 temp_labels = [i for i in labels_file.replace(
                     '\n', ' ').split(' ') if i != '' and i != '\n']
                 img_labels = []
                 for i in range(0, len(temp_labels), 2):
                     img_labels.append([temp_labels[i], temp_labels[i + 1]])
-                self.labels[len(self.imgs) - 1] = img_labels
+                labels[len(imgs) - 1] = img_labels
+
+        return [imgs, labels]
