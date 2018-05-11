@@ -16,6 +16,7 @@ class Cluster():
     def score(self, discriminatoroutput):
         m = max(discriminatoroutput)
         if m  > 0:
+            print(m)
             return sum(discriminatoroutput)/(len(discriminatoroutput)*float(m))
         return 0
 
@@ -23,7 +24,8 @@ class Cluster():
         newDiscriminator = True
         for d in self.discriminators:
             output = d.classify(entry)
-            if self.score(output) >= min(1, self.minScore + max(output)/float(self.threshold)):
+            s = self.score(output)
+            if s >= min(1, self.minScore + max(output)/float(self.threshold)):
                 d.train(entry)
                 newDiscriminator = False
 
