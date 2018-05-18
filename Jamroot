@@ -1,0 +1,11 @@
+#  Python configuration
+using python : 3.6 : /usr/bin/python3 ;
+
+import python ;
+
+project tutorial
+  : requirements
+    <location>.
+    ;
+
+python-extension cluswisard_ext : cluswisard_boost.cc ;
