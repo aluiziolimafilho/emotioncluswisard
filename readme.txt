@@ -1,17 +1,12 @@
+Para poder compilar o projeto é preciso instalar alguns components importantes
+instala o g++ e outras coisas
+$: sudo apt-get install build-essentials
+instala o módulo de desenvolvimento do python3
+$: sudo apt-get install python3-dev
+instala o pip que é um instalador de módulos
+$: sudo apt-get install python3-pip
+e por último instala o pybind11 que integra o python e o c++
+$: sudo pip3 install pybind11
+
 Para compilar o código basta executar:
 $: make
-
-Para executar o programa basta executar:
-$: ./wisard
-
-Para alterar os parâmetros de entrada:
-$: ./wisard [arquivo de treino csv] [arquivo de test csv] [tamanho do endereçamento da RAM] [bleaching] [seed]
-Esses parâmetros são opicionais, porém a ordem deles é obrigatória.
-
-Exemplo:
-$: ./wisard train.csv test.csv 28 1
-
-[arquivo de treino] = train.csv
-[arquivo de teste] = test.csv
-[tamanho do endereçamento da RAM] = 28
-[bleaching ativado] = 1
