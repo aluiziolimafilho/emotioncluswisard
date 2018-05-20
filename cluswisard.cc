@@ -20,7 +20,7 @@ public:
     addresses = vector<int>(addressSize);
     generateRandomAddresses(entrySize);
   }
-  RAM(vector<int> indexes){
+  RAM(vector<int>& indexes){
     addresses = indexes;
   }
 
@@ -80,8 +80,8 @@ public:
     random_shuffle(indexes.begin(), indexes.end());
 
     for(unsigned int i=0; i<rams.size(); i++){
-      vector<int> subIndexes = vector<int>(indexes.begin() + (i*addressSize), indexes.begin() + ((i+1)*addressSize));
-      rams[i] = RAM(subIndexes);
+      vector<int>* subIndexes = new vector<int>(indexes.begin() + (i*addressSize), indexes.begin() + ((i+1)*addressSize));
+      rams[i] = RAM(*subIndexes);
     }
   }
 
@@ -161,6 +161,10 @@ public:
     return *output;
   }
 
+  unsigned int getNumberOfDiscriminators(){
+    return discriminators.size();
+  }
+
 private:
   map<int,Discriminator> discriminators;
   unsigned int addressSize;
@@ -186,7 +190,12 @@ public:
     clusters[label].train(image);
   }
 
-
+  void train(const vector<vector<int>>& images, const vector<string>& labels){
+    for(unsigned int i=0; i<images.size(); i++){
+      cout << "training " << i+1 << " of " << images.size() << endl;
+      train(images[i],labels[i]);
+    }
+  }
 
   map<string, int>& classify(const vector<int>& image){
     map<string, int>* labels = new map<string, int>;
@@ -224,6 +233,8 @@ public:
       if(verbose) cout << "\rclassifying " << i+1 << " of " << images.size();
       map<string,int> candidates = classify(images[i]);
       (*labels)[i] = getBiggestCandidate(candidates);
+      candidates.clear();
+      map<string,int>().swap(candidates);
     }
     if(verbose) cout << "\r" << endl;
     return *labels;
@@ -258,7 +269,7 @@ protected:
         ambiguity = true;
       }
     }
-    tuple<bool, float> ambiguityAndHighest = make_tuple(ambiguity, biggest);
+    tuple<bool, int> ambiguityAndHighest = make_tuple(ambiguity, biggest);
     return ambiguityAndHighest;
   }
 

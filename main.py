@@ -1,6 +1,6 @@
 from ckp import CKP
 from skimage import filters
-from wisardpkg.cluswisard import ClusWisard
+from wisard import ClusWisard
 
 # loading data
 print("loading...")
@@ -27,14 +27,13 @@ def verbose(fase='',index=None, total=None, end=False):
     if end:
         print('\n')
 # instantiate the ClusWisard
-clus = ClusWisard(addressSize=160, minScore=0.01, threshold=100,\
-            verbose=verbose)
+clus = ClusWisard(160, 0.01, 100)
 
 print("training...")
-clus.trainall(imgs[:100], aus[:100])
+clus.train(imgs[:100], aus[:100])
 
 print("classifing...")
-out=clus.classifyall(imgs[280:])
+out=clus.classify(imgs[280:])
 
 count = 0
 total = 0
