@@ -1,0 +1,1 @@
+/usr/bin/c++  -g   CMakeFiles/emotioncluswisard.dir/cluswisard.cc.o CMakeFiles/emotioncluswisard.dir/cluswisard_bind.cc.o CMakeFiles/emotioncluswisard.dir/main.cc.o CMakeFiles/emotioncluswisard.dir/mnist.cc.o CMakeFiles/emotioncluswisard.dir/wisard.cc.o  -o emotioncluswisard 

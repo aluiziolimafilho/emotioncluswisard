@@ -177,7 +177,7 @@ private:
 class ClusWisard{
 public:
   ClusWisard(){}
-  ClusWisard(int addressSize, float minScore, int threshold, int seed = randint(0,1000000), bool verbose=true):
+  ClusWisard(int addressSize, float minScore, int threshold, int seed = randint(0,1000000), bool verbose=false):
     addressSize(addressSize), minScore(minScore), threshold(threshold), seed(seed), bleachingActivated(true), verbose(verbose)
   {
     srand(seed);
@@ -239,6 +239,14 @@ public:
     }
     if(verbose) cout << "\r" << endl;
     return *labels;
+  }
+
+  void setVerbose(bool v){
+    verbose = v;
+  }
+
+  bool getVerbose(){
+    return verbose;
   }
 
 protected:

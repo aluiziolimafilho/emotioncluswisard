@@ -6,11 +6,10 @@
 #include <cmath>
 #include <cstdlib>
 
+#include "cluswisard.cc"
+
 using namespace std;
 
-inline int randint(int min, int max){
-  return min + (rand() % (int)(max - min + 1));
-}
 
 template<typename T, typename Functor>
 void foreach(vector<T>& v, Functor& func, bool verbose=false){
@@ -153,80 +152,6 @@ private:
   }
 };
 
-class RAM{
-public:
-  RAM(){}
-  RAM(int addressSize, int entrySize){
-    addresses = vector<int>(addressSize);
-    generateRandomAddresses(entrySize);
-  }
-
-  int getVote(const vector<int>& image){
-    int index = getIndex(image);
-    if(positions.find(index) == positions.end())
-      return 0;
-    return positions[index];
-  }
-
-  void train(const vector<int>& image){
-    int index = getIndex(image);
-    if(positions.find(index) == positions.end())
-      positions[index] = 0;
-    positions[index]++;
-  }
-
-protected:
-  int getIndex(const vector<int>& image){
-    int index = 0;
-    for(unsigned int i=0; i<addresses.size(); i++){
-      int pos = addresses[i];
-      if(image[pos] > 0){
-        index += (int)pow(2,i);
-      }
-    }
-    return index;
-  }
-
-private:
-  vector<int> addresses;
-  map<int,int> positions;
-
-  void generateRandomAddresses(int entrySize){
-    for(unsigned int i=0; i<addresses.size(); i++){
-      addresses[i] = randint(0, entrySize-1);
-    }
-  }
-};
-
-class Discriminator{
-public:
-  Discriminator(): name("unknow"){}
-  Discriminator(string name, int addressSize, int entrySize): name(name){
-    int numberOfRAMS = entrySize / addressSize;
-    rams = vector<RAM>(numberOfRAMS);
-    for(unsigned int i=0; i<rams.size(); i++){
-      rams[i] = RAM(addressSize, entrySize);
-    }
-  }
-
-  vector<int>& getVotes(const vector<int>& image){
-    vector<int>* votes = new vector<int>(rams.size());
-    for(unsigned int i=0; i<rams.size(); i++){
-      (*votes)[i] = rams[i].getVote(image);
-    }
-    return *votes;
-  }
-
-  void train(const vector<int>& image){
-    for(unsigned int i=0; i<rams.size(); i++){
-      rams[i].train(image);
-    }
-  }
-private:
-  string name;
-  vector<RAM> rams;
-};
-
 class Wisard{
 public:
   Wisard(): addressSize(3), bleachingActivated(true), seed(randint(0,1000000)), verbose(true){
@@ -301,6 +226,14 @@ public:
     }
     if(verbose) cout << "\r" << endl;
     return *labels;
+  }
+
+  void setVerbose(bool v){
+    verbose = v;
+  }
+
+  bool getVerbose(){
+    return verbose;
   }
 
 protected:
