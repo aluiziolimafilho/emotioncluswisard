@@ -1,3 +1,0 @@
-/home/amanda/projects/emotioncluswisard/cmake-build-debug/CMakeFiles/rebuild_cache.dir
-/home/amanda/projects/emotioncluswisard/cmake-build-debug/CMakeFiles/edit_cache.dir
-/home/amanda/projects/emotioncluswisard/cmake-build-debug/CMakeFiles/emotioncluswisard.dir
