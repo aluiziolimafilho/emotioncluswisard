@@ -7,9 +7,10 @@ namespace py = pybind11;
 PYBIND11_MODULE(wisard, m)
 {
     py::class_<ClusWisard>(m, "ClusWisard")
-      .def(py::init<int, float, int>())
+      .def(py::init<int, float, int, int>())
       .def("train", (void (ClusWisard::*)(const vector<vector<int>>&, const vector<string>&)) &ClusWisard::train)
       .def("classify", (vector<string>& (ClusWisard::*)(const vector<vector<int>>&)) &ClusWisard::classify)
+      .def("getMentalImages", &ClusWisard::getMentalImages)
       .def_property("verbose", &ClusWisard::getVerbose, &ClusWisard::setVerbose)
     ;
 

@@ -38,6 +38,25 @@ public:
     positions[index]++;
   }
 
+  vector<vector<int>>& getMentalImage(){
+    vector<vector<int>>* mentalPiece = new vector<vector<int>>(addresses.size());
+
+    for(map<int,int>::iterator j=positions.begin(); j!=positions.end(); ++j){
+      if(j->first == 0) continue;
+      for(unsigned int i=0; i<mentalPiece->size(); i++){
+        if((*mentalPiece)[i].size() == 0){
+          (*mentalPiece)[i].resize(2);
+          (*mentalPiece)[i][0] = addresses[i];
+          (*mentalPiece)[i][1] = 0;
+        }
+        if((j->first & (int)pow(2,i)) > 0){
+          (*mentalPiece)[i][1] += j->second;
+        }
+      }
+    }
+    return *mentalPiece;
+  }
+
 protected:
   int getIndex(const vector<int>& image){
     int index = 0;
@@ -63,15 +82,17 @@ private:
 
 class Discriminator{
 public:
-  Discriminator(): name("unknown"), count(0){}
-  Discriminator(string name, int addressSize, int entrySize): name(name), count(0){
+  Discriminator(){}
+  Discriminator(string name, int addressSize, int entrySize): name(name){
+    this->entrySize = entrySize;
     int numberOfRAMS = entrySize / addressSize;
     rams = vector<RAM>(numberOfRAMS);
     for(unsigned int i=0; i<rams.size(); i++){
       rams[i] = RAM(addressSize, entrySize);
     }
   }
-  Discriminator(int addressSize, int entrySize): name("unknown"), count(0){
+  Discriminator(int addressSize, int entrySize){
+    this->entrySize = entrySize;
     int numberOfRAMS = entrySize / addressSize;
     rams = vector<RAM>(numberOfRAMS);
     vector<int> indexes = vector<int>(entrySize);
@@ -103,9 +124,25 @@ public:
   int getNumberOfTrainings(){
     return count;
   }
+
+  vector<int>& getMentalImage(){
+    vector<int>* mentalImage = new vector<int>(entrySize);
+    for(unsigned int i=0; i<mentalImage->size(); i++) {
+      (*mentalImage)[i]=0;
+    }
+
+    for(unsigned int r=0; r<rams.size(); r++){
+      vector<vector<int>> piece = rams[r].getMentalImage();
+      for(vector<int> p: piece){
+        (*mentalImage)[p[0]] += p[1];
+      }
+    }
+    return *mentalImage;
+  }
 private:
-  string name;
-  int count;
+  string name="unknown";
+  int entrySize=0;
+  int count=0;
   vector<RAM> rams;
 };
 
@@ -113,8 +150,8 @@ private:
 class Cluster {
 public:
   Cluster(){}
-  Cluster(int entrySize, int addressSize, float minScore, int threshold):
-    addressSize(addressSize), entrySize(entrySize), minScore(minScore), threshold(threshold){}
+  Cluster(int entrySize, int addressSize, float minScore, int threshold, int discriminatorsLimit):
+    addressSize(addressSize), entrySize(entrySize), minScore(minScore), threshold(threshold), discriminatorsLimit(discriminatorsLimit){}
 
   float getScore(vector<int>& votes){
     int max = 0;
@@ -136,27 +173,47 @@ public:
     }
 
     if(discriminators.size()==0){
-      discriminators[0] = Discriminator(addressSize, entrySize);
+      discriminators[0] = new Discriminator(addressSize, entrySize);
+      discriminators[0]->train(image);
+      return;
     }
 
+    float bestValue = 0;
+    bool trained = false;
+    Discriminator* bestDiscriminator = NULL;
+
     for(unsigned int i=0; i<discriminators.size(); i++){
-      auto votes = discriminators[i].getVotes(image);
+      auto votes = discriminators[i]->getVotes(image);
       float score = getScore(votes);
-      float count = discriminators[i].getNumberOfTrainings();
+      float count = discriminators[i]->getNumberOfTrainings();
+
+      if(score>=bestValue){
+          bestValue = score;
+          bestDiscriminator = discriminators[i];
+      }
+
       if(score >= minScore || score >= (count/threshold)){
-        discriminators[i].train(image);
+        discriminators[i]->train(image);
+        trained = true;
       }
-      else{
-        discriminators[discriminators.size()] = Discriminator(addressSize, entrySize);
-        discriminators[i].train(image);
-      }
+    }
+
+    if(!trained && (int)discriminators.size() < discriminatorsLimit){
+      int index = discriminators.size();
+      discriminators[index] = new Discriminator(addressSize, entrySize);
+      discriminators[index]->train(image);
+      trained = true;
+    }
+
+    if(!trained && bestDiscriminator != NULL){
+      bestDiscriminator->train(image);
     }
   }
 
   vector<vector<int>>& classify(const vector<int>& image){
     vector<vector<int>>* output = new vector<vector<int>>(discriminators.size());
     for(unsigned int i=0; i<discriminators.size(); i++){
-      (*output)[i] = discriminators[i].getVotes(image);
+      (*output)[i] = discriminators[i]->getVotes(image);
     }
     return *output;
   }
@@ -165,20 +222,29 @@ public:
     return discriminators.size();
   }
 
+  map<int,vector<int>>& getMentalImages(){
+    map<int, vector<int>>* images = new map<int,vector<int>>();
+    for(map<int, Discriminator*>::iterator d=discriminators.begin(); d!=discriminators.end(); ++d){
+      (*images)[d->first] = d->second->getMentalImage();
+    }
+    return *images;
+  }
+
 private:
-  map<int,Discriminator> discriminators;
+  map<int,Discriminator*> discriminators;
   unsigned int addressSize;
   unsigned int entrySize;
   float minScore;
   unsigned int threshold;
+  int discriminatorsLimit;
 };
 
 
 class ClusWisard{
 public:
   ClusWisard(){}
-  ClusWisard(int addressSize, float minScore, int threshold, int seed = randint(0,1000000), bool verbose=false):
-    addressSize(addressSize), minScore(minScore), threshold(threshold), seed(seed), bleachingActivated(true), verbose(verbose)
+  ClusWisard(int addressSize, float minScore, int threshold, int discriminatorsLimit, int seed = randint(0,1000000), bool verbose=false):
+    addressSize(addressSize), minScore(minScore), threshold(threshold), seed(seed), bleachingActivated(true), verbose(verbose), discriminatorsLimit(discriminatorsLimit)
   {
     srand(seed);
   }
@@ -241,6 +307,14 @@ public:
     return *labels;
   }
 
+  map<string, map<int, vector<int>>>& getMentalImages(){
+    map<string, map<int, vector<int>>>* mentalImages = new map<string, map<int, vector<int>>>();
+    for(map<string, Cluster>::iterator c=clusters.begin(); c!=clusters.end(); ++c){
+      (*mentalImages)[c->first] = c->second.getMentalImages();
+    }
+    return *mentalImages;
+  }
+
   void setVerbose(bool v){
     verbose = v;
   }
@@ -251,7 +325,7 @@ public:
 
 protected:
   void makeClusters(string label, int entrySize){
-    clusters[label] = Cluster(entrySize, addressSize, minScore, threshold);
+    clusters[label] = Cluster(entrySize, addressSize, minScore, threshold, discriminatorsLimit);
   }
 
   string getBiggestCandidate(map<string,int>& candidates){
@@ -290,4 +364,5 @@ private:
   map<string, Cluster> clusters;
   bool bleachingActivated;
   bool verbose;
+  int discriminatorsLimit;
 };
