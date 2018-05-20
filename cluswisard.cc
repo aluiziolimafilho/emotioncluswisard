@@ -177,7 +177,7 @@ private:
 class ClusWisard{
 public:
   ClusWisard(){}
-  ClusWisard(int addressSize, float minScore, int threshold, int seed = randint(0,1000000), bool verbose=false):
+  ClusWisard(int addressSize, float minScore, int threshold, int seed = randint(0,1000000), bool verbose=true):
     addressSize(addressSize), minScore(minScore), threshold(threshold), seed(seed), bleachingActivated(true), verbose(verbose)
   {
     srand(seed);
@@ -192,9 +192,10 @@ public:
 
   void train(const vector<vector<int>>& images, const vector<string>& labels){
     for(unsigned int i=0; i<images.size(); i++){
-      cout << "training " << i+1 << " of " << images.size() << endl;
+      if(verbose) cout << "\rtraining " << i+1 << " of " << images.size();
       train(images[i],labels[i]);
     }
+    if(verbose) cout << "\r" << endl;
   }
 
   map<string, int>& classify(const vector<int>& image){
