@@ -19,4 +19,10 @@ PYBIND11_MODULE(wisard, m)
       .def("classify", (vector<string>& (Wisard::*)(const vector<vector<int>>&)) &Wisard::classify)
       .def_property("verbose", &Wisard::getVerbose, &Wisard::setVerbose)
     ;
+
+    py::class_<KernelCanvas>(m, "KernelCanvas")
+      .def(py::init<int, int, int>())
+      .def("show", &KernelCanvas::show)
+      .def("__call__", &KernelCanvas::operator())
+    ;
 }
