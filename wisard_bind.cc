@@ -23,6 +23,7 @@ PYBIND11_MODULE(wisard, m)
     py::class_<KernelCanvas>(m, "KernelCanvas")
       .def(py::init<int, int, int>())
       .def("show", &KernelCanvas::show)
-      .def("__call__", &KernelCanvas::operator())
+      .def("__call__", (vector<int>& (KernelCanvas::*)(const vector<int>&)) &KernelCanvas::operator())
+      .def("__call__", (vector<vector<int>>& (KernelCanvas::*)(const vector<vector<int>>&)) &KernelCanvas::operator())
     ;
 }
