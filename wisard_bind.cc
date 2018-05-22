@@ -10,6 +10,7 @@ PYBIND11_MODULE(wisard, m)
       .def(py::init<int, float, int, int>())
       .def("train", (void (ClusWisard::*)(const vector<vector<int>>&, const vector<string>&)) &ClusWisard::train)
       .def("classify", (vector<string>& (ClusWisard::*)(const vector<vector<int>>&)) &ClusWisard::classify)
+      .def("getMentalImage", &ClusWisard::getMentalImage)
       .def("getMentalImages", &ClusWisard::getMentalImages)
       .def_property("verbose", &ClusWisard::getVerbose, &ClusWisard::setVerbose)
     ;

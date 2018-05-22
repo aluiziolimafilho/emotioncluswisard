@@ -9,6 +9,12 @@
 
 using namespace std;
 
+class Exception{
+    public:
+        Exception(string msg): msg(msg){}
+        const string msg;
+};
+
 inline int randint(int min, int max){
   return min + (rand() % (int)(max - min + 1));
 }
@@ -16,19 +22,20 @@ inline int randint(int min, int max){
 class RAM{
 public:
   RAM(){}
-  RAM(int addressSize, int entrySize){
+  RAM(const int addressSize, const int entrySize){
     addresses = vector<int>(addressSize);
     generateRandomAddresses(entrySize);
   }
-  RAM(vector<int>& indexes){
-    addresses = indexes;
-  }
+  RAM(const vector<int>& indexes): addresses(indexes){}
 
   int getVote(const vector<int>& image){
     int index = getIndex(image);
-    if(positions.find(index) == positions.end())
+    if(positions.find(index) == positions.end()){
       return 0;
-    return positions[index];
+    }
+    else{
+      return positions[index];
+    }
   }
 
   void train(const vector<int>& image){
@@ -38,8 +45,13 @@ public:
     positions[index]++;
   }
 
-  vector<vector<int>>& getMentalImage(){
+  vector<vector<int>>& getMentalImage() {
     vector<vector<int>>* mentalPiece = new vector<vector<int>>(addresses.size());
+    for(unsigned int i=0; i<mentalPiece->size(); i++){
+      (*mentalPiece)[i].resize(2);
+      (*mentalPiece)[i][0] = addresses[i];
+      (*mentalPiece)[i][1] = 0;
+    }
 
     for(map<int,int>::iterator j=positions.begin(); j!=positions.end(); ++j){
       if(j->first == 0) continue;
@@ -58,7 +70,7 @@ public:
   }
 
 protected:
-  int getIndex(const vector<int>& image){
+  int getIndex(const vector<int>& image) const{
     int index = 0;
     for(unsigned int i=0; i<addresses.size(); i++){
       int pos = addresses[i];
@@ -82,17 +94,15 @@ private:
 
 class Discriminator{
 public:
-  Discriminator(){}
-  Discriminator(string name, int addressSize, int entrySize): name(name){
-    this->entrySize = entrySize;
+  Discriminator(): entrySize(0){}
+  Discriminator(string name, int addressSize, int entrySize): name(name), entrySize(entrySize){
     int numberOfRAMS = entrySize / addressSize;
     rams = vector<RAM>(numberOfRAMS);
     for(unsigned int i=0; i<rams.size(); i++){
       rams[i] = RAM(addressSize, entrySize);
     }
   }
-  Discriminator(int addressSize, int entrySize){
-    this->entrySize = entrySize;
+  Discriminator(int addressSize, int entrySize): entrySize(entrySize){
     int numberOfRAMS = entrySize / addressSize;
     rams = vector<RAM>(numberOfRAMS);
     vector<int> indexes = vector<int>(entrySize);
@@ -106,7 +116,7 @@ public:
     }
   }
 
-  vector<int>& getVotes(const vector<int>& image){
+  vector<int>& getVotes(const vector<int>& image) {
     vector<int>* votes = new vector<int>(rams.size());
     for(unsigned int i=0; i<rams.size(); i++){
       (*votes)[i] = rams[i].getVote(image);
@@ -121,7 +131,7 @@ public:
     }
   }
 
-  int getNumberOfTrainings(){
+  int getNumberOfTrainings() const{
     return count;
   }
 
@@ -140,9 +150,9 @@ public:
     return *mentalImage;
   }
 private:
-  string name="unknown";
-  int entrySize=0;
-  int count=0;
+  string name;
+  int entrySize;
+  int count;
   vector<RAM> rams;
 };
 
@@ -153,7 +163,7 @@ public:
   Cluster(int entrySize, int addressSize, float minScore, int threshold, int discriminatorsLimit):
     addressSize(addressSize), entrySize(entrySize), minScore(minScore), threshold(threshold), discriminatorsLimit(discriminatorsLimit){}
 
-  float getScore(vector<int>& votes){
+  float getScore(const vector<int>& votes) const{
     int max = 0;
     float sum = 0;
     for(auto v: votes){
@@ -168,8 +178,7 @@ public:
 
   void train(const vector<int>& image){
     if(image.size() != entrySize){
-      cout << "Error: input size is different from setup in the cluster" << endl;
-      exit(0);
+      throw Exception("Error: input size is different from setup in the cluster");
     }
 
     if(discriminators.size()==0){
@@ -222,12 +231,17 @@ public:
     return discriminators.size();
   }
 
-  map<int,vector<int>>& getMentalImages(){
-    map<int, vector<int>>* images = new map<int,vector<int>>();
+  vector<vector<int>>& getMentalImages(){
+    vector<vector<int>>* images = new vector<vector<int>>(discriminators.size());
     for(map<int, Discriminator*>::iterator d=discriminators.begin(); d!=discriminators.end(); ++d){
       (*images)[d->first] = d->second->getMentalImage();
     }
     return *images;
+  }
+  ~Cluster(){
+    for(unsigned int i=0; i<discriminators.size(); ++i){
+      delete discriminators[i];
+    }
   }
 
 private:
@@ -307,8 +321,14 @@ public:
     return *labels;
   }
 
-  map<string, map<int, vector<int>>>& getMentalImages(){
-    map<string, map<int, vector<int>>>* mentalImages = new map<string, map<int, vector<int>>>();
+  vector<vector<int>>& getMentalImage(string label){
+    vector<vector<int>>* mentalImage = NULL;
+    mentalImage = &(clusters[label].getMentalImages());
+    return *mentalImage;
+  }
+
+  map<string, vector<vector<int>>>& getMentalImages(){
+    map<string, vector<vector<int>>>* mentalImages = new map<string, vector<vector<int>>>();
     for(map<string, Cluster>::iterator c=clusters.begin(); c!=clusters.end(); ++c){
       (*mentalImages)[c->first] = c->second.getMentalImages();
     }
@@ -319,16 +339,16 @@ public:
     verbose = v;
   }
 
-  bool getVerbose(){
+  bool getVerbose() const{
     return verbose;
   }
 
 protected:
-  void makeClusters(string label, int entrySize){
+  void makeClusters(const string label,const int entrySize){
     clusters[label] = Cluster(entrySize, addressSize, minScore, threshold, discriminatorsLimit);
   }
 
-  string getBiggestCandidate(map<string,int>& candidates){
+  string getBiggestCandidate(map<string,int>& candidates) const{
     string label = "";
     int biggest = 0;
     for(map<string,int>::iterator i=candidates.begin(); i != candidates.end(); ++i){
@@ -340,7 +360,7 @@ protected:
     return label.substr(0,label.find("::"));
   }
 
-  tuple<bool, int> isThereAmbiguity(map<string,int>& candidates){
+  tuple<bool, int> isThereAmbiguity(map<string,int>& candidates) const{
     int biggest = 0;
     bool ambiguity = false;
     for(map<string,int>::iterator i=candidates.begin(); i != candidates.end(); ++i){

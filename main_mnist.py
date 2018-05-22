@@ -47,8 +47,7 @@ for aClass in mentalImages:
 
 for aClass in mentalImages:
     groupMentalImages = mentalImages[aClass]
-    for key in groupMentalImages:
-        d = groupMentalImages[key]
+    for key,d in enumerate(groupMentalImages):
         mentalImage = [ [ int((d[(r*28)+c]/float(m))*255) for c in range(28)] for r in range(28)]
         f = open("mentalImages/mental_"+aClass+"_"+str(key)+".png", "wb")
         w.write(f, mentalImage)
