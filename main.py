@@ -2,51 +2,54 @@ from ckp import CKP
 from skimage import filters
 from wisard import ClusWisard
 from png import Writer
-
+from random import random
 # loading data
 print("loading...")
-size=(400,400)
-imgs_o, aus_o, emotions_o = CKP.get_imgs_labels_and_emotions(threshold_func=filters.threshold_sauvola, labels_dir='FACS/',  emotions_dir='Emotion/', imgs_dir='cohn-kanade-images/', reshape=size)
+size=(100,100)
+imgs_o, aus_o, emotions_o = CKP.get_all_imgs(threshold_func=filters.threshold_sauvola, labels_dir='dataset/FACS/',  emotions_dir='dataset/Emotion/', imgs_dir='dataset/cohn-kanade-images/', reshape=size)
 
-imgs_o = list(map(lambda x: x.ravel(), imgs_o))
+imgs_train = []
+imgs_test = []
 
-imgs = []
-aus = []
-emotions = []
+aus_train = []
+aus_test = []
+
+emotions_train = {}
+emotions_test = []
 
 for i,img in enumerate(imgs_o):
-    if len(img) == (size[0]*size[1]):
-        imgs.append(img)
-        aul = ':'
-        for au in aus_o[i]:
-            aul += str(float(au[0]))+":"
-        aus.append(aul)
-        emotions.append(str(int(float(emotions_o[i][0]))))
+    if i in emotions_o:
+        if random() < 0.1:
+            imgs_test.append(img)
+            emotions_test.append(str(emotions_o[i]))
+            if i in aus_o:
+                aus_test.append(aus_o[i])
+        else:
+            imgs_train.append(img)
+            k = len(imgs_train)-1
+            emotions_train[k] = str(emotions_o[i])
+            if i in aus_o:
+                aus_train.append(aus_o[i])
+
+    else:
+        imgs_train.append(img)
+        if i in aus_o:
+            aus_train.append(aus_o[i])
 
 # instantiate the ClusWisard
-clus = ClusWisard(size[0], 0.5, 100, 2)
+clus = ClusWisard(size[0], 0.3, 1000, 5)
 clus.verbose=True
 
 print("training...")
-clus.train(imgs[:1], emotions[:1])
+clus.train(imgs_train, emotions_train)
 
 print("classifing...")
-out=clus.classify(imgs)
-#
-# count = 0
-# total = 0
-# for i,e in enumerate(aus[200:]):
-#     aus_e = e.split(':')[1:-1]
-#     aus_out = out[i].split(':')[1:-1]
-#     total += len(aus_e)
-#     for au in aus_e:
-#         if au in aus_out:
-#             count += 1
+out=clus.classify(imgs_test)
 
 count = 0
-total = len(emotions)
-for i,e in enumerate(emotions):
-    if e == out[i]:
+total = len(imgs_test)
+for i,e in enumerate(out):
+    if e == emotions_test[i]:
         count += 1
 
 print(" "+str(count)+" of "+str(total))
@@ -58,24 +61,18 @@ mentalImages = clus.getMentalImages()
 
 
 w = Writer(size[0],size[1], greyscale=True)
-out = [ [ int(imgs[0][(r*28)+c]*255) for c in range(size[0])] for r in range(size[1])]
-f = open("mentalImages/test.png", "wb")
-w.write(f, out)
-f.close()
-m = 0
+m=0
 for aClass in mentalImages:
     groupMentalImages = mentalImages[aClass]
-    for key in groupMentalImages:
-        d = groupMentalImages[key]
+    for d in groupMentalImages:
         lm = max(d)
         if lm > m:
             m = lm
 
 for aClass in mentalImages:
     groupMentalImages = mentalImages[aClass]
-    for key in groupMentalImages:
-        d = groupMentalImages[key]
-        mentalImage = [ [ int((d[(r*28)+c]/float(m))*255) for c in range(size[0])] for r in range(size[1])]
+    for key,d in enumerate(groupMentalImages):
+        mentalImage = [ [ int((d[(r*size[0])+c]/float(m))*255) for c in range(size[0])] for r in range(size[1])]
         f = open("mentalImages/e_mental_"+aClass+"_"+str(key)+".png", "wb")
         w.write(f, mentalImage)
         f.close()

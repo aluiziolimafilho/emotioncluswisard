@@ -270,12 +270,46 @@ public:
     clusters[label].train(image);
   }
 
+  void train(const vector<int>& image){
+    map<string,int> candidates = classify(image);
+    string label = getBiggestCandidate(candidates);
+    clusters[label].train(image);
+  }
+
   void train(const vector<vector<int>>& images, const vector<string>& labels){
     for(unsigned int i=0; i<images.size(); i++){
       if(verbose) cout << "\rtraining " << i+1 << " of " << images.size();
       train(images[i],labels[i]);
     }
     if(verbose) cout << "\r" << endl;
+  }
+
+  void train(const vector<vector<int>>& images, map<int, string>& labels){
+    unsigned int size = images.size() > labels.size() ? images.size()-labels.size() : 0;
+    vector<int> labelless = vector<int>(size);
+    unsigned int j=0;
+    for(unsigned int i=0; i<images.size(); i++){
+      if(verbose) cout << "\rtraining supervised " << i+1 << " of " << images.size();
+      if(labels.find(i) == labels.end()){
+        if((labelless.size()-1) < j){
+          labelless.push_back(j++);
+        }
+        else{
+          labelless[j++] = i;
+        }
+      }
+      else{
+        train(images[i], labels[i]);
+      }
+    }
+    if(verbose) cout << "\r" << endl;
+
+    for(unsigned int i=0; i<labelless.size(); i++){
+      if(verbose) cout << "\rtraining unsupervised " << i+1 << " of " << labelless.size();
+      train(images[i]);
+    }
+    if(verbose) cout << "\r" << endl;
+
   }
 
   map<string, int>& classify(const vector<int>& image){

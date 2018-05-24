@@ -7,9 +7,17 @@ print("loading...")
 X,y = mndata.load_training()
 X_test,y_test = mndata.load_testing()
 
+
 cut=0
 X = [ [ (1 if i>cut else 0) for i in a] for a in X]
 X_test = [ [ (1 if i>cut else 0) for i in a] for a in X_test]
+
+
+w = Writer(28,28, greyscale=True)
+mentalImage = [ [ 255 if X[0][(r*28)+c] > 0 else 0 for c in range(28)] for r in range(28)]
+f = open("mentalImages/mental_test.png", "wb")
+w.write(f, mentalImage)
+f.close()
 
 y = [ str(a) for a in y]
 y_test = [ str(a) for a in y_test]
@@ -19,7 +27,7 @@ clus = ClusWisard(28, 0.3, 6000, 5)
 clus.verbose = True
 
 print("training...")
-clus.train(X, y)
+clus.train(X[:1], y[:1])
 
 print("classifing...")
 out=clus.classify(X_test)
@@ -39,8 +47,7 @@ w = Writer(28,28, greyscale=True)
 m = 0
 for aClass in mentalImages:
     groupMentalImages = mentalImages[aClass]
-    for key in groupMentalImages:
-        d = groupMentalImages[key]
+    for d in groupMentalImages:
         lm = max(d)
         if lm > m:
             m = lm

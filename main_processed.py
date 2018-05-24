@@ -28,6 +28,7 @@ for face_filename in glob.iglob(face_dir + '**/*.png', recursive=True):
     for r in r.asDirect()[2]:
         l = list(map(lambda x: 1 if x>0 else 0, r))
         local_image += l
+
     images.append(local_image)
     image.close()
 
@@ -65,7 +66,7 @@ for aClass in mentalImages:
 for aClass in mentalImages:
     groupMentalImages = mentalImages[aClass]
     for key,d in enumerate(groupMentalImages):
-        mentalImage = [ [ int((1-(d[(r*28)+c]/float(m)))*255) for c in range(size[0])] for r in range(size[1])]
+        mentalImage = [ [ 255 if d[(r*size[0])+c] > 0 else 0 for c in range(size[0])] for r in range(size[1])]
         f = open("mentalImages/aus_mental_"+aClass+"_"+str(key)+".png", "wb")
         w.write(f, mentalImage)
         f.close()

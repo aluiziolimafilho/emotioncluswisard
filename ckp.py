@@ -15,7 +15,7 @@ class CKP:
                 imgs_dir + filename[len(labels_dir):-len('_facs.txt')] + '.png')
 
             if img_path.is_file():
-                img = np.array(Image.open(img_path))
+                img = np.array(Image.open(img_path).convert('L'))
                 if reshape != None:
                     img = cv2.resize(img, reshape)
 
@@ -70,22 +70,31 @@ class CKP:
         return [imgs, labels, emotions]
 
     @staticmethod
-    def get_all_imgs(threshold_func=None, labels_dir='FACS/', imgs_dir='cohn-kanade-images/', reshape=None):
+    def get_all_imgs(threshold_func=None, labels_dir='FACS/', imgs_dir='cohn-kanade-images/', emotions_dir='Emotion/', reshape=None):
         imgs = []
         labels = {}
+        emotions = {}
         for filename in glob.iglob(imgs_dir + '**/*.png', recursive=True):
-            print(filename)
             label_path = Path(
                 labels_dir + filename[len(imgs_dir):-len('.png')] + '_facs.txt')
 
-            img = np.array(Image.open(filename))
+            emotion_path = Path(
+                emotions_dir + filename[len(imgs_dir):-len('.png')] + '_emotion.txt'
+            )
+
+            img = np.array(Image.open(filename).convert('L'))
             if reshape != None:
                 img = cv2.resize(img, reshape)
+            img = img.ravel()
 
             if threshold_func == None:
                 imgs.append(img)
             else:
                 imgs.append((img <= threshold_func(img)).astype(np.uint8))
+
+            if emotion_path.is_file():
+                emo_file = open(str(emotion_path), "r")
+                emotions[len(imgs)-1] = int(float(emo_file.readline()))
 
             if label_path.is_file():
                 labels_file = open(str(label_path), "r").read()
@@ -93,7 +102,7 @@ class CKP:
                     '\n', ' ').split(' ') if i != '' and i != '\n']
                 img_labels = []
                 for i in range(0, len(temp_labels), 2):
-                    img_labels.append([temp_labels[i], temp_labels[i + 1]])
+                    img_labels.append([int(float(temp_labels[i])), int(float(temp_labels[i + 1]))])
                 labels[len(imgs) - 1] = img_labels
 
-        return [imgs, labels]
+        return [imgs, labels, emotions]
