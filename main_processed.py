@@ -1,4 +1,4 @@
-from wisard import ClusWisard
+from wisardpkg import ClusWisard
 from png import Reader, Writer
 import glob
 
@@ -33,8 +33,7 @@ for face_filename in glob.iglob(face_dir + '**/*.png', recursive=True):
     image.close()
 
 print("training...")
-clus = ClusWisard(160, 0.3, 100, 2)
-clus.verbose = True
+clus = ClusWisard(160, 0.3, 100, 2, verbose=True)
 clus.train(images, labels)
 
 print("classifing...")

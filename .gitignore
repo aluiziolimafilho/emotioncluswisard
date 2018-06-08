@@ -13,5 +13,6 @@ cohn-kanade-images/*
 Emotion/*
 FACS/*
 mentalImages/*
+mnist/mentalImages/*
 *-ubyte
 dataset/*

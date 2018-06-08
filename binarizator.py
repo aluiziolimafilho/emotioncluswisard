@@ -18,9 +18,9 @@ class Binarizador(object):
             cor = imagem[x, y]
             luminancia = self.obter_luminancia(cor)
             if (luminancia >= 1.5 * luminancia_media):
-                condicao = True
+                condicao = 1
             else:
-                condicao = False
+                condicao = 0
             binarizacao.append(condicao)
     return binarizacao
 

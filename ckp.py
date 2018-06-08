@@ -4,6 +4,7 @@ from PIL import Image
 from pathlib import Path
 from scipy import sparse
 import cv2
+from binarizator import Binarizador
 
 class CKP:
     @staticmethod
@@ -37,6 +38,7 @@ class CKP:
     @staticmethod
     def get_imgs_labels_and_emotions(threshold_func=None, labels_dir='FACS/', emotions_dir='Emotion/', imgs_dir='cohn-kanade-images/', reshape=None):
         imgs = []
+        imgs_raw = []
         labels = []
         emotions = []
         for filename in glob.iglob(emotions_dir + '**/*.txt', recursive=True):
@@ -44,14 +46,19 @@ class CKP:
                 imgs_dir + filename[len(emotions_dir):-len('_emotion.txt')] + '.png')
 
             if img_path.is_file():
-                img = np.array(Image.open(img_path))
+                img = np.array(Image.open(img_path).convert('L'))
                 if reshape != None:
                     img = cv2.resize(img, reshape)
+                imgs_raw.append(img)
 
-                if threshold_func == None:
-                    imgs.append(img)
-                else:
-                    imgs.append((img <= threshold_func(img)).astype(np.uint8))
+                if threshold_func != None:
+                    img = (img <= threshold_func(img)).astype(np.uint8)
+
+                img = img.ravel()
+                img=list(img)
+
+                imgs.append(img)
+
 
                 labels_file = open(labels_dir+str(filename[len(emotions_dir):-len('_emotion.txt')] + '_facs.txt'), "r").read()
                 temp_labels = [i for i in labels_file.replace(
@@ -61,13 +68,10 @@ class CKP:
                     img_labels.append([temp_labels[i], temp_labels[i + 1]])
                 labels.append(img_labels)
 
-                emotion_file = open(str(filename), "r").read()
-                temp_emotion = [i for i in emotion_file.replace(
-                    '\n', ' ').split(' ') if i != '' and i != '\n']
-
+                temp_emotion = str(int(float(open(str(filename), "r").read())))
                 emotions.append(temp_emotion)
 
-        return [imgs, labels, emotions]
+        return [imgs, labels, emotions, imgs_raw]
 
     @staticmethod
     def get_all_imgs(threshold_func=None, labels_dir='FACS/', imgs_dir='cohn-kanade-images/', emotions_dir='Emotion/', reshape=None):
@@ -79,8 +83,12 @@ class CKP:
                 labels_dir + filename[len(imgs_dir):-len('.png')] + '_facs.txt')
 
             emotion_path = Path(
-                emotions_dir + filename[len(imgs_dir):-len('.png')] + '_emotion.txt'
-            )
+                emotions_dir + filename[len(imgs_dir):-len('.png')] + '_emotion.txt')
+
+            # img = Image.open(filename).convert('L')
+            # b = Binarizador()
+            # img = b.binarizar(img)
+            # imgs.append(img)
 
             img = np.array(Image.open(filename).convert('L'))
             if reshape != None:
